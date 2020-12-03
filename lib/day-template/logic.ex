@@ -4,7 +4,8 @@ defmodule Advent.DayTemplate do
   def run do
     IO.puts("Starting day #{@day_no} logic\n")
 
-    input = ReadInput.read_input("lib/day-#{@day_no}/input")
+    # input = ReadInput.read_input("lib/day-#{@day_no}/input")
+    input = ReadInput.read_input("lib/day-#{@day_no}/test-input")
 
     part1(input)
     part2(input)
