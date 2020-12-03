@@ -27,15 +27,25 @@ defmodule Advent.Day3 do
 
   defp part2(input) do
     IO.puts("\n Part 2:\n")
+
+    movements = [{1, 1}, {3, 1}, {5, 1}, {7, 1}, {1, 2}]
+
+    res =
+      Enum.reduce([1] ++ movements, fn el, acc ->
+        score = 0
+        res = move({input, el, el, score}, true)
+
+        IO.inspect(res, label: "Current score")
+
+        acc * res
+      end)
+
+    IO.inspect(res, label: "Score")
   end
 
   defp get_coords(map, x, y) do
     size = String.length(Enum.at(map, 0))
     overflow = x - div(x, size) * size
-
-    # IO.inspect(overflow, label: "Overflow")
-    # IO.inspect(x, label: "coord_x")
-    # IO.inspect(y, label: "coord_y")
 
     map |> Enum.at(y) |> String.at(overflow)
   end
