@@ -27,36 +27,35 @@ defmodule Advent.Day5 do
   defp part2(input) do
     IO.puts("\n Part 2:\n")
 
-    seat_ids = input |> Enum.map(fn {_, _, seat_id} -> seat_id end) |> Enum.sort()
+    seat_ids = Enum.map(input, fn {_, _, seat_id} -> seat_id end)
+    el_count = Enum.count(seat_ids)
 
-    seat_ids
-    |> binary_search(true)
-    |> IO.inspect(label: "Result")
-  end
+    {min, max, sum} =
+      Enum.reduce(seat_ids, {1_000_000, 0, 0}, fn el, acc ->
+        {orig_min, orig_max, orig_sum} = acc
 
-  defp binary_search(list = [val], true) when length(list) == 1, do: val - 1
-  defp binary_search(list = [val], false) when length(list) == 1, do: val + 1
+        new_sum = orig_sum + el
 
-  defp binary_search(list, _) do
-    seats_count = length(list)
-    [offset | _] = list
+        new_min =
+          case el < orig_min do
+            true -> el
+            false -> orig_min
+          end
 
-    middle = div(seats_count, 2)
+        new_max =
+          case el > orig_max do
+            true -> el
+            false -> orig_max
+          end
 
-    value = Enum.at(list, middle)
-    offset_value = value - offset
+        {new_min, new_max, new_sum}
+      end)
+      |> IO.inspect()
 
-    is_further? = offset_value == middle
+    expected_sum = (min + max) / 2 * (el_count + 1)
+    lacking_element = expected_sum - sum
 
-    {list_start, list_end} = Enum.split(list, middle)
-
-    new_list =
-      case is_further? do
-        true -> list_end
-        false -> list_start
-      end
-
-    binary_search(new_list, is_further?)
+    IO.inspect(lacking_element, label: "Result")
   end
 
   # possible values: FB, LR
