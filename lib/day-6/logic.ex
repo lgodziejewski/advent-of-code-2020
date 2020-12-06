@@ -35,6 +35,26 @@ defmodule Advent.Day6 do
 
   defp part2(input) do
     IO.puts("\n Part 2:\n")
+
+    input
+    |> Enum.reduce(0, fn el, acc ->
+      common_elements =
+        el
+        |> String.split(" ")
+        |> Enum.map(fn entry ->
+          entry
+          |> String.split("")
+          |> Enum.filter(&(&1 !== ""))
+          |> MapSet.new()
+        end)
+        |> Enum.reduce(fn el, acc ->
+          MapSet.intersection(acc, el)
+        end)
+        |> MapSet.size()
+
+      acc + common_elements
+    end)
+    |> IO.inspect()
   end
 
   defp parse_group(input) do
