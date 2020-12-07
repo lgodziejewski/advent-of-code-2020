@@ -7,8 +7,10 @@ defmodule Advent.Day7 do
     # input = ReadInput.read_input("lib/day-#{@day_no}/test-input")
     input = ReadInput.read_input("lib/day-#{@day_no}/input")
 
-    part1(input)
-    part2(input)
+    deps_list = parse_input(input)
+
+    part1(deps_list)
+    part2(deps_list)
 
     IO.puts("\nDay #{@day_no} logic finished")
   end
@@ -18,9 +20,7 @@ defmodule Advent.Day7 do
 
     bag_color = "shiny gold"
 
-    deps_list = parse_input(input)
-
-    bags_tree = %{bag_color => list_to_tree(deps_list, bag_color)}
+    bags_tree = %{bag_color => list_to_tree(input, bag_color)}
 
     bags_tree
     |> get_parents(bag_color)
@@ -31,6 +31,14 @@ defmodule Advent.Day7 do
 
   defp part2(input) do
     IO.puts("\n Part 2:\n")
+
+    bag_color = "shiny gold"
+
+    input_map = Map.new(input)
+
+    input_map
+    |> get_child_count(bag_color)
+    |> IO.inspect(label: "Result")
   end
 
   defp parse_input(input) do
@@ -86,5 +94,19 @@ defmodule Advent.Day7 do
     parent_colors = Map.keys(parents)
 
     parent_colors ++ Enum.flat_map(parent_colors, &get_parents(parents, &1))
+  end
+
+  defp get_child_count(map, el) do
+    # eg: [{"bright white", "1"}, {"muted yellow", "2"}]
+    children = Map.get(map, el)
+
+    Enum.reduce(children, 0, fn child, acc ->
+      {child_name, child_count_str} = child
+      child_count = String.to_integer(child_count_str)
+
+      child_deps_count = get_child_count(map, child_name)
+
+      acc + child_count * child_deps_count + child_count
+    end)
   end
 end
