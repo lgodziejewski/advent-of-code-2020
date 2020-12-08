@@ -9,7 +9,8 @@ defmodule Advent.Day9 do
       ReadInput.read_input("lib/day-#{@day_no}/input")
       |> Enum.map(&String.to_integer/1)
 
-    part1(input)
+    first_result = part1(input)
+    part2(input, first_result)
 
     IO.puts("\nDay #{@day_no} logic finished")
   end
@@ -19,7 +20,53 @@ defmodule Advent.Day9 do
 
     preamble_size = 25
 
-      find_first_incorrect(input, preamble_size, preamble_size) |> IO.inspect(label: "Result")
+    {result, _} = find_first_incorrect(input, preamble_size, preamble_size)
+
+    IO.inspect(result, label: "Result")
+  end
+
+  defp part2(input, first_result) do
+    IO.puts("\n Part 2:\n")
+
+    wrapped_range =
+      input
+      |> Enum.with_index()
+      |> Enum.find_value(nil, fn {el, idx} ->
+        shorter_input = Enum.drop(input, idx)
+        check_sum(shorter_input, idx, [el], first_result)
+      end)
+
+    {true, range} = wrapped_range
+
+    min = Enum.min(range)
+    max = Enum.max(range)
+
+    IO.inspect(min + max, label: "Result")
+  end
+
+  defp check_sum(input, current_position, elements, target) do
+    sum = Enum.reduce(elements, 0, fn el, acc -> acc + el end)
+    size = Enum.count(elements)
+
+    case compare_ints(sum, target) do
+      :higher ->
+        false
+
+      :equal ->
+        {true, elements}
+
+      :lower ->
+        new_elements = Enum.take(input, size + 1)
+        check_sum(input, current_position, new_elements, target)
+    end
+  end
+
+  defp compare_ints(a, b) do
+    cond do
+      a > b -> :higher
+      a == b -> :equal
+      a < b -> :lower
+    end
   end
 
   defp find_first_incorrect(list, preamble_size, position) do
