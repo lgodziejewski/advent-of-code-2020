@@ -47,6 +47,13 @@ defmodule Advent.Day10 do
       end)
 
     IO.inspect(time, label: "reduce time [us]")
+
+    # {time2, _} =
+    #   :timer.tc(fn ->
+    #     part2_recur(list)
+    #   end)
+
+    # IO.inspect(time2, label: "recur time [us]")
   end
 
   defp part2_reduce(input) do
@@ -85,5 +92,44 @@ defmodule Advent.Day10 do
 
   defp new_previous(previous, el) do
     previous ++ [el]
+  end
+
+  defp part2_recur(input) do
+    reversed_input = Enum.reverse(input)
+
+    [highest | rest] = reversed_input
+
+    check_diff_recur2(highest, rest)
+    |> Enum.count()
+    |> IO.inspect(label: "Result recur")
+  end
+
+  defp check_diff_recur2(el, []), do: [el]
+
+  defp check_diff_recur2(current, other) do
+    [first | other1] = other
+
+    other_variants = if length(other1) > 0, do: check_diff_recur2(current, other1), else: []
+
+    diff1 = current - first
+
+    res1 =
+      if diff1 >= 1 and diff1 <= 3 do
+        check_diff_recur2(first, other1)
+      else
+        []
+      end
+
+    res1
+    |> Enum.map(&prefix_with_current(&1, current))
+    |> Enum.concat(other_variants)
+  end
+
+  defp prefix_with_current(el, current) when is_number(el) do
+    [current, el]
+  end
+
+  defp prefix_with_current(list, current) do
+    [current] ++ list
   end
 end
