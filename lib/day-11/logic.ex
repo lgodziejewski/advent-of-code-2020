@@ -13,10 +13,19 @@ defmodule Advent.Day11 do
 
     IO.inspect({size_x, size_y}, label: "size")
 
-    # print_map(map, {size_x, size_y})
+    {time, _} =
+      :timer.tc(fn ->
+        part1(map, {size_x, size_y})
+      end)
 
-    part1(map, {size_x, size_y})
-    part2(map)
+    IO.inspect(time, label: "part 1 time [us]")
+
+    {time, _} =
+      :timer.tc(fn ->
+        part2(map)
+      end)
+
+    IO.inspect(time, label: "part 2 time [us]")
 
     IO.puts("\nDay #{@day_no} logic finished")
   end
@@ -37,7 +46,9 @@ defmodule Advent.Day11 do
   defp part1(map, size) do
     IO.puts("\n Part 1:\n")
 
-    {result_map, _iterations} = do_round(map, size, :changed, 1)
+    map_with_neighbours = append_neighbours(map, size)
+
+    {result_map, _iterations} = do_round(map_with_neighbours, size, :changed, 1)
 
     {size_x, size_y} = size
 
@@ -46,7 +57,7 @@ defmodule Advent.Day11 do
       range(size_x)
       |> Enum.reduce(acc, fn x, acc2 ->
         coords = {x, y}
-        element = Map.get(result_map, coords)
+        element = get_in(result_map, [coords, :value])
 
         if element == "#" do
           acc2 + 1
@@ -56,6 +67,30 @@ defmodule Advent.Day11 do
       end)
     end)
     |> IO.inspect(label: "Result")
+  end
+
+  defp append_neighbours(map, size) do
+    {size_x, size_y} = size
+
+    range(size_y)
+    |> Enum.reduce(%{}, fn y, acc ->
+      range(size_x)
+      |> Enum.reduce(acc, fn x, map_with_neighbours ->
+        coords = {x, y}
+        element = Map.get(map, coords)
+        neighbour_coords = get_surrounding_coords(coords)
+
+        Map.put(map_with_neighbours, coords, %{value: element, other: neighbour_coords})
+      end)
+    end)
+  end
+
+  defp get_surrounding_coords(coords) do
+    {x, y} = coords
+
+    [{x - 1, y - 1}, {x, y - 1}, {x + 1, y - 1}] ++
+      [{x - 1, y}, {x + 1, y}] ++
+      [{x - 1, y + 1}, {x, y + 1}, {x + 1, y + 1}]
   end
 
   defp part2(input) do
@@ -73,9 +108,10 @@ defmodule Advent.Day11 do
         range(size_x)
         |> Enum.reduce(acc, fn x, {new_map, status} ->
           coords = {x, y}
-          element = Map.get(map, coords)
-          {next_value, changed} = get_next_value(element, map, coords)
-          updated_map = Map.put(new_map, coords, next_value)
+          %{value: element, other: neighbours} = Map.get(map, coords)
+
+          {next_value, changed} = get_next_value(element, map, neighbours)
+          updated_map = Map.put(new_map, coords, %{value: next_value, other: neighbours})
           updated_status = normalize_changed(status, changed)
           {updated_map, updated_status}
         end)
@@ -98,10 +134,10 @@ defmodule Advent.Day11 do
   # Otherwise, the seat's state does not change.
   defp get_next_value(".", _, _), do: {".", :stale}
 
-  defp get_next_value("#", map, coords) do
+  defp get_next_value("#", map, neighbour_coords) do
     res =
-      get_surrounding_coords(coords)
-      |> Enum.map(&Map.get(map, &1))
+      neighbour_coords
+      |> Enum.map(&get_in(map, [&1, :value]))
       |> Enum.filter(&(&1 == "#"))
       |> Enum.count()
 
@@ -112,10 +148,10 @@ defmodule Advent.Day11 do
     end
   end
 
-  defp get_next_value("L", map, coords) do
+  defp get_next_value("L", map, neighbour_coords) do
     res =
-      get_surrounding_coords(coords)
-      |> Enum.map(&Map.get(map, &1))
+      neighbour_coords
+      |> Enum.map(&get_in(map, [&1, :value]))
       |> Enum.filter(&(&1 == "#"))
       |> Enum.count()
 
@@ -126,19 +162,11 @@ defmodule Advent.Day11 do
     end
   end
 
-  defp get_surrounding_coords(coords) do
-    {x, y} = coords
-
-    [{x - 1, y - 1}, {x, y - 1}, {x + 1, y - 1}] ++
-      [{x - 1, y}, {x + 1, y}] ++
-      [{x - 1, y + 1}, {x, y + 1}, {x + 1, y + 1}]
-  end
-
   defp print_map(map, {size_x, size_y}) do
     0..(size_y - 1)
     |> Enum.map(fn y ->
       0..(size_x - 1)
-      |> Enum.map(fn x -> Map.get(map, {x, y}) end)
+      |> Enum.map(fn x -> get_in(map, [{x, y}, :value]) end)
       |> Enum.join("")
     end)
     |> Enum.join("\n")
